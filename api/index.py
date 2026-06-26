@@ -47,25 +47,25 @@ def get_notes():
         login_url = "https://moutamadris.men.gov.ma/moutamadris/Account"
         
         headers_get = {
-            'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            'Accept': "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-            'Accept-Encoding': "gzip, deflate, br",
+            'User-Agent': "Mozilla/5.0 (Linux; Android 9; Pixel 4 Build/PQ3A.190801.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/81.0.4044.117 Mobile Safari/537.36",
+            'Accept': "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            'Accept-Encoding': "gzip, deflate",
             'Cache-Control': "max-age=0",
             'Upgrade-Insecure-Requests': "1",
             'Referer': "https://moutamadris.men.gov.ma/moutamadris/Account",
-            'Accept-Language': "ar,fr;q=0.9,en;q=0.8",
+            'Accept-Language': "ar-EG,ar;q=0.9,en-US;q=0.8,en;q=0.7",
         }
         
         response = session.get(login_url, headers=headers_get, timeout=30)
         
-        # استخراج التوكن باستخدام html.parser بدلاً من lxml
+        # استخراج التوكن
         soup = BeautifulSoup(response.text, 'html.parser')
         token_input = soup.find('input', {'name': '__RequestVerificationToken'})
         
         if not token_input:
             return jsonify({
                 'status': 'error',
-                'message': '❌ فشل في استخراج التوكن من صفحة الحماية'
+                'message': '❌ فشل في استخراج التوكن'
             }), 500
         
         token = token_input['value']
@@ -78,21 +78,22 @@ def get_notes():
         }
         
         headers_post = {
-            'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            'Accept': "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-            'Accept-Encoding': "gzip, deflate, br",
+            'User-Agent': "Mozilla/5.0 (Linux; Android 9; Pixel 4 Build/PQ3A.190801.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/81.0.4044.117 Mobile Safari/537.36",
+            'Accept': "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+            'Accept-Encoding': "gzip, deflate",
             'Content-Type': "application/x-www-form-urlencoded",
             'Cache-Control': "max-age=0",
             'Upgrade-Insecure-Requests': "1",
             'Origin': "https://moutamadris.men.gov.ma",
             'Referer': login_url,
-            'Accept-Language': "ar,fr;q=0.9,en;q=0.8",
+            'Accept-Language': "ar-EG,ar;q=0.9,en-US;q=0.8,en;q=0.7",
         }
         
         response_login = session.post(login_url, data=payload, headers=headers_post, allow_redirects=False, timeout=30)
         
         # التحقق من النتيجة
         if response_login.status_code == 302:
+            # متابعة التوجيه إلى Dashboard
             redirect_url = response_login.headers.get('Location')
             if redirect_url:
                 if not redirect_url.startswith('http'):
@@ -119,12 +120,12 @@ def get_notes():
         }
         
         headers_notes = {
-            'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            'Accept-Encoding': "gzip, deflate, br",
+            'User-Agent': "Mozilla/5.0 (Linux; Android 9; Pixel 4 Build/PQ3A.190801.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/81.0.4044.117 Mobile Safari/537.36",
+            'Accept-Encoding': "gzip, deflate",
             'X-Requested-With': "XMLHttpRequest",
             'Origin': "https://moutamadris.men.gov.ma",
             'Referer': "https://moutamadris.men.gov.ma/moutamadris/TuteurEleves/GetNotesEleve",
-            'Accept-Language': "ar,fr;q=0.9,en;q=0.8",
+            'Accept-Language': "ar-EG,ar;q=0.9,en-US;q=0.8,en;q=0.7",
         }
         
         response_notes = session.post(notes_url, data=payload_notes, headers=headers_notes, timeout=30)
@@ -170,7 +171,7 @@ def get_notes():
             else:
                 return jsonify({
                     'status': 'error',
-                    'message': '❌ لم يتم العثور على جدول النقاط أو تم حظر السيرفر'
+                    'message': '❌ لم يتم العثور على جدول النقاط'
                 }), 404
             
             # ====== 6. إرجاع النتيجة ======
@@ -192,17 +193,17 @@ def get_notes():
     except requests.exceptions.Timeout:
         return jsonify({
             'status': 'error',
-            'message': '❌ انتهت مهلة الاتصال - خادم مسار بطيء أو قام بحظر السيرفر'
+            'message': '❌ انتهت مهلة الاتصال - الخادم بطيء جداً'
         }), 504
     except requests.exceptions.ConnectionError:
         return jsonify({
             'status': 'error',
-            'message': '❌ فشل الاتصال بالسيرفر'
+            'message': '❌ فشل الاتصال بالسيرفر - تأكد من الانترنت'
         }), 503
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'❌ حدث خطأ داخلي: {str(e)}'
+            'message': f'❌ حدث خطأ: {str(e)}'
         }), 500
 
 if __name__ == "__main__":
